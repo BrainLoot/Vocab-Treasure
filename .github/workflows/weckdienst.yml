@@ -1,0 +1,31 @@
+# Weckdienst: Ein Supabase-Gratisprojekt pausiert nach 7 Tagen ohne Anfrage.
+# Alle 3 Tage eine kleine Anfrage hält es wach. Damit GitHub den Zeitplan nicht
+# nach 60 Tagen ohne Änderung abschaltet, legt der Dienst dann ein Lebenszeichen ab.
+name: Weckdienst
+on:
+  schedule:
+    - cron: "17 5 */3 * *"
+  workflow_dispatch:
+permissions: { contents: write }
+jobs:
+  wecken:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Datenbank anfragen
+        run: |
+          URL=$(grep -o 'https://[a-z0-9]*\.supabase\.co' index.html | head -1)
+          KEY=$(grep -o 'sb_publishable_[A-Za-z0-9_-]*' index.html | head -1)
+          curl -fsS -X POST "$URL/rest/v1/rpc/vt_ping" -H "apikey: $KEY" -H "Content-Type: application/json" -d '{}'
+      - name: Lebenszeichen (gegen die 60-Tage-Abschaltung)
+        run: |
+          alter=$(( $(date +%s) - $(git log -1 --format=%ct) ))
+          if [ "$alter" -gt $((40 * 86400)) ]; then
+            date -u +%Y-%m-%d > .github/lebenszeichen.txt
+            git config user.name "Wortspiele"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add .github/lebenszeichen.txt
+            git commit -m "Lebenszeichen"
+            git push
+          fi
