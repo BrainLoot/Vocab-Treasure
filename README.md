@@ -1,4 +1,4 @@
-# Vocab Treasure
+# Brainloot – Vocab Treasure
 
 Login-Seite eines Vokabeltrainers für Schulklassen. Zugang nur mit einem Konto der Lehrperson.
 
